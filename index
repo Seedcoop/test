@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>🍽️ 연세세브란스빌딩 주변 맛집</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg1:#667eea; --bg2:#764ba2;
+      --card:#ffffffF2; --ink:#2c3e50; --sub:#7f8c8d;
+      --chip:#ecf0f1; --grad1:linear-gradient(135deg,var(--bg1),var(--bg2));
+      --shadow:0 15px 35px rgba(0,0,0,.12);
+      --shadow-lg:0 25px 50px rgba(0,0,0,.18)
+    }
+    body{font-family:system-ui,-apple-system,Pretendard,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      min-height:100vh;background:var(--grad1);color:var(--ink)}
+    .container{max-width:1200px;margin:0 auto;padding:20px}
+    .header,.panel{background:var(--card);border-radius:20px;box-shadow:var(--shadow)}
+    .header{padding:30px;margin-bottom:20px;text-align:center}
+    .header h1{font-size:2rem;margin-bottom:8px}
+    .header p{color:var(--sub)}
+    .toolbar{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px}
+    .panel{padding:16px}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .filter-group{display:flex;flex-wrap:wrap;gap:8px}
+    .chip{padding:10px 14px;border:none;border-radius:999px;background:#ecf0f1;color:var(--ink);
+      font-weight:600;cursor:pointer;transition:.2s}
+    .chip[aria-pressed="true"]{background:var(--bg1);color:#fff}
+    .search{flex:1;min-width:220px;display:flex;gap:8px}
+    .search input{flex:1;padding:12px;border:2px solid #ecf0f1;border-radius:12px}
+    .search input:focus{outline:none;border-color:#667eea}
+    select{padding:12px;border:2px solid #ecf0f1;border-radius:12px;min-width:180px}
+    .actions{display:flex;flex-wrap:wrap;gap:10px}
+    .btn{padding:12px 16px;border:none;border-radius:12px;color:#fff;font-weight:700;cursor:pointer;transition:.2s}
+    .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+    .btn-primary{background:var(--bg1)}
+    .btn-success{background:#10ac84}
+    .btn-warn{background:#feca57;color:#2c3e50}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-top:14px}
+    .card{background:var(--card);border-left:5px solid var(--bg1);border-radius:16px;padding:18px;box-shadow:var(--shadow);transition:.2s}
+    .card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+    .name{font-weight:800;font-size:1.2rem;margin-bottom:6px}
+    .rowline{display:flex;gap:8px;align-items:center;margin:6px 0}
+    .label{font-weight:700;color:var(--sub);min-width:54px}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-size:.8rem;font-weight:800;color:#fff}
+    .korean{background:#e74c3c}.japanese{background:#f39c12}.chinese{background:#27ae60}.western{background:#3498db}.other{background:#9b59b6}
+    .price{background:#34495e}
+    .distance{color:#e67e22;font-weight:800}
+    .links a{font-size:.9rem;text-decoration:underline;color:#334155}
+    .random{display:none;background:linear-gradient(135deg,#feca57,#ff9ff3);color:#1f2937;padding:18px;border-radius:16px;margin-top:10px}
+    .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;
+      padding:10px 14px;border-radius:10px;opacity:0;pointer-events:none;transition:.3s}
+    .toast.show{opacity:1}
+    /* Modal */
+    dialog{border:none;border-radius:16px;box-shadow:var(--shadow-lg);max-width:520px;width:90%}
+    dialog::backdrop{background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
+    form .grp{margin-bottom:12px}
+    form label{display:block;font-weight:700;margin-bottom:6px}
+    form input,form select{width:100%;padding:12px;border:2px solid #ecf0f1;border-radius:12px}
+    form input:focus,form select:focus{outline:none;border-color:#667eea}
+    .submit{width:100%;padding:14px;background:var(--bg1);color:#fff;border:none;border-radius:12px;font-weight:800}
+    @media (max-width:768px){
+      .header h1{font-size:1.6rem}
+      .grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header" role="banner">
+      <h1>🍽️ 연세세브란스빌딩 주변 맛집</h1>
+      <p>검색·필터·정렬·랜덤 추천까지 한 번에</p>
+    </header>
+
+    <section class="panel toolbar" aria-label="필터와 도구">
+      <div class="row" aria-label="음식 종류">
+        <strong style="min-width:72px">🍜 종류</strong>
+        <div id="catFilters" class="filter-group" role="group" aria-label="종류 필터">
+          <!-- Chips are injected -->
+        </div>
+      </div>
+
+      <div class="row" aria-label="가격대">
+        <strong style="min-width:72px">💰 가격</strong>
+        <div id="priceFilters" class="filter-group" role="group" aria-label="가격 필터"></div>
+      </div>
+
+      <div class="row">
+        <div class="search" role="search">
+          <input id="q" type="search" placeholder="식당명·메뉴 검색 (예: 냉면/우동/삼겹살)" aria-label="검색"/>
+          <select id="sorter" aria-label="정렬">
+            <option value="distance.asc">거리 ↑</option>
+            <option value="price.asc">가격 ↑</option>
+            <option value="price.desc">가격 ↓</option>
+            <option value="name.asc">이름 ↑</option>
+          </select>
+        </div>
+        <div class="actions" role="group" aria-label="도구">
+          <button id="btnRandom" class="btn btn-warn" type="button">🎲 랜덤 추천</button>
+          <button id="btnAdd" class="btn btn-success" type="button">➕ 식당 추가</button>
+          <button id="btnUpdate" class="btn btn-primary" type="button" title="가짜 업데이트 시뮬레이션">🔄 업데이트</button>
+        </div>
+      </div>
+
+      <div id="randomBox" class="random" role="status" aria-live="polite"></div>
+    </section>
+
+    <section class="panel">
+      <div id="grid" class="grid" aria-live="polite" aria-busy="false"></div>
+    </section>
+  </div>
+
+  <!-- Add Modal -->
+  <dialog id="addDlg" aria-labelledby="addTitle">
+    <form id="addForm" method="dialog">
+      <h2 id="addTitle" style="margin-bottom:10px">🏪 새 식당 추가</h2>
+      <div class="grp">
+        <label for="name">식당 이름</label>
+        <input id="name" required maxlength="40" />
+      </div>
+      <div class="grp">
+        <label for="menu">주 메뉴</label>
+        <input id="menu" required maxlength="40"/>
+      </div>
+      <div class="grp">
+        <label for="cat">음식 종류</label>
+        <select id="cat" required>
+          <option value="">선택하세요</option>
+          <option value="korean">한식</option>
+          <option value="japanese">일식</option>
+          <option value="chinese">중식</option>
+          <option value="western">양식</option>
+          <option value="other">기타</option>
+        </select>
+      </div>
+      <div class="grp">
+        <label for="price">평균 가격(원)</label>
+        <input id="price" type="number" min="0" step="100" required />
+      </div>
+      <div class="grp">
+        <label for="dist">연세세브란스빌딩에서 거리(도보 분)</label>
+        <input id="dist" type="number" min="1" max="60" required />
+      </div>
+      <button class="submit" type="submit">식당 추가하기</button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">완료</div>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = (sel, root=document)=>root.querySelector(sel);
+    const $$ = (sel, root=document)=>[...root.querySelectorAll(sel)];
+    const toast = (msg)=>{ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1400) };
+    const clampInt = (v,min,max)=>Math.max(min,Math.min(max,Math.round(Number(v)||0)));
+    const formatWon = n => (Number(n)||0).toLocaleString()+"원";
+    const normalize = s => (s||"").toString().trim().toLowerCase();
+
+    // ---------- Data ----------
+    const seed = [
+      {name:'명동집',menu:'급냉 삼겹살',category:'korean',price:15000,distance:5},
+      {name:'서울역 구내식당',menu:'한식 정식',category:'korean',price:6500,distance:5},
+      {name:'서리재',menu:'솥밥',category:'korean',price:12000,distance:5},
+      {name:'토끼정',menu:'크림 카레 우동',category:'japanese',price:11000,distance:5},
+      {name:'누들킹',menu:'우동',category:'japanese',price:9000,distance:5},
+      {name:'더플레이스',menu:'폭탄피자',category:'western',price:18000,distance:7},
+      {name:'돈수백',menu:'돼지국밥',category:'korean',price:8000,distance:8},
+      {name:'투뿔등심',menu:'한우 등심',category:'korean',price:35000,distance:7},
+      {name:'호수집',menu:'닭꼬치',category:'korean',price:13000,distance:10},
+      {name:'희락갈치',menu:'갈치조림',category:'korean',price:14000,distance:12},
+      {name:'은호식당',menu:'꼬리곰탕',category:'korean',price:17000,distance:12},
+      {name:'막내회집',menu:'회',category:'korean',price:25000,distance:12},
+      {name:'가메골손왕만두',menu:'왕만두',category:'chinese',price:9000,distance:12},
+      {name:'구복만두',menu:'중국식 만두',category:'chinese',price:10000,distance:12},
+      {name:'부원면옥',menu:'평양냉면',category:'korean',price:12000,distance:13},
+      {name:'충무칼국수',menu:'칼국수',category:'korean',price:8000,distance:13},
+      {name:'닭진미강원집',menu:'닭곰탕',category:'korean',price:11000,distance:12},
+      {name:'풍년옥',menu:'설렁탕',category:'korean',price:10000,distance:13},
+      {name:'영남집',menu:'닭곰탕',category:'korean',price:9500,distance:13},
+      {name:'페이야드',menu:'디저트',category:'other',price:8000,distance:12},
+      {name:'유즈라멘',menu:'유즈시오라멘',category:'japanese',price:12000,distance:15},
+      {name:'만리재 비스트로',menu:'화덕피자',category:'western',price:20000,distance:15},
+      {name:'갈월이골목',menu:'파스타',category:'western',price:16000,distance:16},
+      {name:'포컬포인트',menu:'베이커리',category:'other',price:7000,distance:15},
+      {name:'파이브가이즈',menu:'수제버거',category:'western',price:14000,distance:15},
+      {name:'을지면옥',menu:'평양냉면',category:'korean',price:13000,distance:18},
+      {name:'안동장',menu:'짜장면',category:'chinese',price:8000,distance:18},
+      {name:'개화',menu:'중식',category:'chinese',price:15000,distance:18},
+      {name:'전주집',menu:'양념갈비',category:'korean',price:22000,distance:18},
+      {name:'서울부띠끄',menu:'퓨전요리',category:'other',price:25000,distance:16}
+    ];
+    const LS_KEY = "ys_sev_restaurants_v1";
+    let restaurants = load();
+    function load(){
+      const saved = JSON.parse(localStorage.getItem(LS_KEY)||"[]");
+      // merge by name (case-insensitive)
+      const map = new Map();
+      [...seed,...saved].forEach(r=>{
+        const key = normalize(r.name);
+        if(!map.has(key)) map.set(key,{...r});
+      });
+      return [...map.values()];
+    }
+    function persist(){
+      // only persist items not in seed (by name)
+      const seedSet = new Set(seed.map(s=>normalize(s.name)));
+      const custom = restaurants.filter(r=>!seedSet.has(normalize(r.name)));
+      localStorage.setItem(LS_KEY, JSON.stringify(custom));
+    }
+
+    // ---------- State ----------
+    const catDef = [
+      {val:"all", label:"전체"},
+      {val:"korean", label:"한식"},
+      {val:"japanese", label:"일식"},
+      {val:"chinese", label:"중식"},
+      {val:"western", label:"양식"},
+      {val:"other", label:"기타"}
+    ];
+    const priceDef = [
+      {val:"all", label:"전체"},
+      {val:"under10", label:"1만원 이하"},
+      {val:"10s", label:"1만원대"},
+      {val:"20s", label:"2만원대"},
+      {val:"over20", label:"2만원 이상"}
+    ];
+    const state = {
+      category:"all",
+      price:"all",
+      query:"",
+      sort:"distance.asc"
+    };
+
+    // ---------- UI Build ----------
+    function buildChips(container, items, group){
+      container.innerHTML = items.map((it,i)=>(
+        `<button class="chip" type="button" data-group="${group}" data-val="${it.val}"
+          aria-pressed="${i===0?'true':'false'}">${it.label}</button>`
+      )).join("");
+    }
+    buildChips($("#catFilters"), catDef, "cat");
+    buildChips($("#priceFilters"), priceDef, "price");
+
+    // ---------- Filtering / Sorting ----------
+    const inPriceRange = (p, rng)=>{
+      switch(rng){
+        case "under10": return p < 10000;
+        case "10s": return p>=10000 && p<20000;
+        case "20s": return p>=20000 && p<30000;
+        case "over20": return p>=30000;
+        default: return true;
+      }
+    };
+    const catName = c => ({korean:"한식",japanese:"일식",chinese:"중식",western:"양식",other:"기타"})[c]||c;
+    function applyFilters(){
+      const qn = normalize(state.query);
+      let list = restaurants.filter(r=>{
+        const catOk = state.category==="all" || r.category===state.category;
+        const priceOk = state.price==="all" || inPriceRange(r.price,state.price);
+        const qOk = !qn || normalize(r.name).includes(qn) || normalize(r.menu).includes(qn);
+        return catOk && priceOk && qOk;
+      });
+      const [key,dir] = state.sort.split(".");
+      list.sort((a,b)=>{
+        const mk = {
+          distance:(x)=>x.distance,
+          price:(x)=>x.price,
+          name:(x)=>normalize(x.name)
+        }[key];
+        const av = mk(a), bv = mk(b);
+        if(av<bv) return dir==="asc"?-1:1;
+        if(av>bv) return dir==="asc"?1:-1;
+        return 0;
+      });
+      return list;
+    }
+
+    // ---------- Render ----------
+    function mapLink(name){
+      const q = encodeURIComponent(name);
+      const origin = encodeURIComponent("연세세브란스빌딩");
+      return {
+        search:`https://m.map.naver.com/search2/search.naver?query=${q}`,
+        route:`https://map.naver.com/v5/directions/-/-/${q}?c=14134377,4518501,15,0,0,0,dh`
+        // Note: mobile/PC will handle formats; origin text shown in UI only
+      };
+    }
+    function render(){
+      $("#grid").setAttribute("aria-busy","true");
+      const list = applyFilters();
+      $("#grid").innerHTML = list.map(r=>{
+        const links = mapLink(r.name);
+        return `
+        <article class="card" tabindex="0">
+          <div class="name">${r.name}</div>
+          <div class="rowline"><span class="label">메뉴</span><span>${r.menu}</span></div>
+          <div class="rowline"><span class="label">종류</span><span class="badge ${r.category}">${catName(r.category)}</span></div>
+          <div class="rowline"><span class="label">가격</span><span class="badge price">${formatWon(r.price)}</span></div>
+          <div class="rowline"><span class="label">거리</span><span class="distance">🚶 ${r.distance}분</span></div>
+          <div class="rowline links" style="gap:14px">
+            <a href="${links.search}" target="_blank" rel="noopener">네이버 지도 검색</a>
+            <a href="${links.route}" target="_blank" rel="noopener">길찾기(출발: 연세세브란스빌딩)</a>
+          </div>
+        </article>`;
+      }).join("") || `<div style="padding:16px">조건에 맞는 식당이 없습니다.</div>`;
+      $("#grid").setAttribute("aria-busy","false");
+      return list;
+    }
+    render();
+
+    // ---------- Events ----------
+    // filter chips
+    $("#catFilters").addEventListener("click",(e)=>{
+      const btn = e.target.closest(".chip"); if(!btn) return;
+      $$("#catFilters .chip").forEach(b=>b.setAttribute("aria-pressed","false"));
+      btn.setAttribute("aria-pressed","true");
+      state.category = btn.dataset.val;
+      render();
+    });
+    $("#priceFilters").addEventListener("click",(e)=>{
+      const btn = e.target.closest(".chip"); if(!btn) return;
+      $$("#priceFilters .chip").forEach(b=>b.setAttribute("aria-pressed","false"));
+      btn.setAttribute("aria-pressed","true");
+      state.price = btn.dataset.val;
+      render();
+    });
+
+    // search (debounced)
+    let tId;
+    $("#q").addEventListener("input",(e)=>{
+      clearTimeout(tId);
+      tId = setTimeout(()=>{ state.query = e.target.value; render(); }, 180);
+    });
+
+    // sorter
+    $("#sorter").addEventListener("change",(e)=>{
+      state.sort = e.target.value;
+      render();
+    });
+
+    // random recommendation
+    $("#btnRandom").addEventListener("click",()=>{
+      const list = applyFilters();
+      if(list.length===0){ toast("조건에 맞는 식당이 없어요"); $("#randomBox").style.display="none"; return; }
+      const pick = list[Math.floor(Math.random()*list.length)];
+      $("#randomBox").innerHTML = `
+        <div><strong>🎯 오늘의 추천</strong></div>
+        <div style="margin-top:6px">
+          <div style="font-size:1.1rem;font-weight:800">${pick.name}</div>
+          <div>🍽️ ${pick.menu} · 🏷️ ${catName(pick.category)} · 💰 ${formatWon(pick.price)} · 🚶 ${pick.distance}분</div>
+        </div>`;
+      $("#randomBox").style.display="block";
+      $("#randomBox").scrollIntoView({behavior:"smooth",block:"center"});
+    });
+
+    // fake update (simulate API)
+    $("#btnUpdate").addEventListener("click",async()=>{
+      toast("업데이트 중…");
+      await new Promise(r=>setTimeout(r,600));
+      const incoming = [
+        {name:"새로운 맛집 1",menu:"특제 덮밥",category:"korean",price:12000,distance:8},
+        {name:"새로운 맛집 2",menu:"라멘",category:"japanese",price:13000,distance:10}
+      ];
+      let added=0;
+      incoming.forEach(n=>{
+        if(!restaurants.some(r=>normalize(r.name)===normalize(n.name))){
+          restaurants.push(n); added++;
+        }
+      });
+      if(added>0){ persist(); render(); }
+      toast(`${added}개 업데이트 완료`);
+    });
+
+    // add dialog
+    const dlg = $("#addDlg");
+    $("#btnAdd").addEventListener("click",()=>dlg.showModal());
+    $("#addForm").addEventListener("submit",(e)=>{
+      e.preventDefault();
+      const name = $("#name").value;
+      const menu = $("#menu").value;
+      const category = $("#cat").value;
+      const price = clampInt($("#price").value,0,1_000_000);
+      const distance = clampInt($("#dist").value,1,120);
+
+      if(!name||!menu||!category){ toast("입력값을 확인하세요"); return; }
+      // duplication by name (ignore case/space)
+      const key = normalize(name);
+      if(restaurants.some(r=>normalize(r.name)===key)){
+        toast("이미 존재하는 식당입니다"); return;
+      }
+      restaurants.push({name:name.trim(),menu:menu.trim(),category,price,distance});
+      persist();
+      render();
+      dlg.close();
+      e.target.reset();
+      toast("새 식당을 추가했습니다");
+    });
+    // close dialog on backdrop click (native supported); Esc closes automatically
+
+    // keyboard: press / to focus search
+    window.addEventListener("keydown",(e)=>{
+      if(e.key==="/" && document.activeElement!==$("#q")){
+        e.preventDefault(); $("#q").focus();
+      }
+    });
+  </script>
+</body>
+</html>
